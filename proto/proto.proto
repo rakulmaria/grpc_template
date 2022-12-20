@@ -2,15 +2,20 @@ syntax = "proto3";
 package whatTime;
 option go_package = "proto/proto.proto";
 
-message AskForTimeMessage {
-    int64 clientId = 1;
+service ChittyChat {
+    rpc Join (JoinRequest) returns (stream Message);
+    rpc Publish (Message) returns (Empty);
 }
 
-message TimeMessage {
-    string serverName = 1;
-    string time = 2;
+message JoinRequest {
+    string user = 1;
+    int64 lamportClock = 2;
 }
 
-service TimeAsk {
-    rpc AskForTime(AskForTimeMessage) returns (TimeMessage);
-  }
+message Message {
+    string user = 1;
+    string message = 2;
+    int64 lamportClock = 3;
+}
+
+message Empty {}

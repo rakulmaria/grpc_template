@@ -10,7 +10,7 @@ Very much based on [the walkthrough](https://github.com/theauk/grpcTimeRequestEx
 
 Every time you update the proto file, you have to run the protoc command (the long command in the proto file section).
 
-    protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative grpc/proto.proto
+    protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative proto/proto.proto
 
 Keep track of naming. For example, if the name of the service is changed to YearAsk then we e.g. also have to change the return statement in connectToServer to instead use proto.NewYearAskClient. This also goes for message and function changes.
 

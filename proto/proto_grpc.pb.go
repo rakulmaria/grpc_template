@@ -18,88 +18,152 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// TimeAskClient is the client API for TimeAsk service.
+// ChittyChatClient is the client API for ChittyChat service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type TimeAskClient interface {
-	AskForTime(ctx context.Context, in *AskForTimeMessage, opts ...grpc.CallOption) (*TimeMessage, error)
+type ChittyChatClient interface {
+	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (ChittyChat_JoinClient, error)
+	Publish(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Empty, error)
 }
 
-type timeAskClient struct {
+type chittyChatClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewTimeAskClient(cc grpc.ClientConnInterface) TimeAskClient {
-	return &timeAskClient{cc}
+func NewChittyChatClient(cc grpc.ClientConnInterface) ChittyChatClient {
+	return &chittyChatClient{cc}
 }
 
-func (c *timeAskClient) AskForTime(ctx context.Context, in *AskForTimeMessage, opts ...grpc.CallOption) (*TimeMessage, error) {
-	out := new(TimeMessage)
-	err := c.cc.Invoke(ctx, "/whatTime.TimeAsk/AskForTime", in, out, opts...)
+func (c *chittyChatClient) Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (ChittyChat_JoinClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ChittyChat_ServiceDesc.Streams[0], "/whatTime.ChittyChat/Join", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &chittyChatJoinClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ChittyChat_JoinClient interface {
+	Recv() (*Message, error)
+	grpc.ClientStream
+}
+
+type chittyChatJoinClient struct {
+	grpc.ClientStream
+}
+
+func (x *chittyChatJoinClient) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *chittyChatClient) Publish(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/whatTime.ChittyChat/Publish", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// TimeAskServer is the server API for TimeAsk service.
-// All implementations must embed UnimplementedTimeAskServer
+// ChittyChatServer is the server API for ChittyChat service.
+// All implementations must embed UnimplementedChittyChatServer
 // for forward compatibility
-type TimeAskServer interface {
-	AskForTime(context.Context, *AskForTimeMessage) (*TimeMessage, error)
-	mustEmbedUnimplementedTimeAskServer()
+type ChittyChatServer interface {
+	Join(*JoinRequest, ChittyChat_JoinServer) error
+	Publish(context.Context, *Message) (*Empty, error)
+	mustEmbedUnimplementedChittyChatServer()
 }
 
-// UnimplementedTimeAskServer must be embedded to have forward compatible implementations.
-type UnimplementedTimeAskServer struct {
+// UnimplementedChittyChatServer must be embedded to have forward compatible implementations.
+type UnimplementedChittyChatServer struct {
 }
 
-func (UnimplementedTimeAskServer) AskForTime(context.Context, *AskForTimeMessage) (*TimeMessage, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AskForTime not implemented")
+func (UnimplementedChittyChatServer) Join(*JoinRequest, ChittyChat_JoinServer) error {
+	return status.Errorf(codes.Unimplemented, "method Join not implemented")
 }
-func (UnimplementedTimeAskServer) mustEmbedUnimplementedTimeAskServer() {}
+func (UnimplementedChittyChatServer) Publish(context.Context, *Message) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Publish not implemented")
+}
+func (UnimplementedChittyChatServer) mustEmbedUnimplementedChittyChatServer() {}
 
-// UnsafeTimeAskServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to TimeAskServer will
+// UnsafeChittyChatServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ChittyChatServer will
 // result in compilation errors.
-type UnsafeTimeAskServer interface {
-	mustEmbedUnimplementedTimeAskServer()
+type UnsafeChittyChatServer interface {
+	mustEmbedUnimplementedChittyChatServer()
 }
 
-func RegisterTimeAskServer(s grpc.ServiceRegistrar, srv TimeAskServer) {
-	s.RegisterService(&TimeAsk_ServiceDesc, srv)
+func RegisterChittyChatServer(s grpc.ServiceRegistrar, srv ChittyChatServer) {
+	s.RegisterService(&ChittyChat_ServiceDesc, srv)
 }
 
-func _TimeAsk_AskForTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AskForTimeMessage)
+func _ChittyChat_Join_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(JoinRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ChittyChatServer).Join(m, &chittyChatJoinServer{stream})
+}
+
+type ChittyChat_JoinServer interface {
+	Send(*Message) error
+	grpc.ServerStream
+}
+
+type chittyChatJoinServer struct {
+	grpc.ServerStream
+}
+
+func (x *chittyChatJoinServer) Send(m *Message) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _ChittyChat_Publish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Message)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TimeAskServer).AskForTime(ctx, in)
+		return srv.(ChittyChatServer).Publish(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/whatTime.TimeAsk/AskForTime",
+		FullMethod: "/whatTime.ChittyChat/Publish",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TimeAskServer).AskForTime(ctx, req.(*AskForTimeMessage))
+		return srv.(ChittyChatServer).Publish(ctx, req.(*Message))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// TimeAsk_ServiceDesc is the grpc.ServiceDesc for TimeAsk service.
+// ChittyChat_ServiceDesc is the grpc.ServiceDesc for ChittyChat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var TimeAsk_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "whatTime.TimeAsk",
-	HandlerType: (*TimeAskServer)(nil),
+var ChittyChat_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "whatTime.ChittyChat",
+	HandlerType: (*ChittyChatServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AskForTime",
-			Handler:    _TimeAsk_AskForTime_Handler,
+			MethodName: "Publish",
+			Handler:    _ChittyChat_Publish_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Join",
+			Handler:       _ChittyChat_Join_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "proto/proto.proto",
 }
