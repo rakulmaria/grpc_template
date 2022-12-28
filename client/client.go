@@ -18,8 +18,8 @@ type Client struct {
 }
 
 var (
-	clientPort = flag.Int("cPort", 0, "client port number")
-	serverPort = flag.Int("sPort", 0, "server port number (should match the port used for the server)")
+	clientPort = flag.Int("cPort", 8081, "client port number")
+	serverPort = flag.Int("sPort", 8080, "server port number (should match the port used for the server)")
 )
 
 func main() {
